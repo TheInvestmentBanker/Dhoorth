@@ -1,6 +1,40 @@
 const m=require("mongoose");
 const block=new m.Schema({type:{type:String,enum:["paragraph","heading","image","video","document","quote","list","highlight"]},heading:String,text:String,level:Number,url:String,title:String,caption:String,credit:String,items:[String]},{_id:true});
-const User=m.model("User",new m.Schema({name:String,slug:{type:String,unique:true},email:{type:String,unique:true,lowercase:true},password:{type:String,select:false},role:{type:String,default:"author"},bio:String},{timestamps:true}));
+const User = m.model("User", new m.Schema({
+  name: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true
+  },
+
+  slug: {
+    type: String,
+    unique: true
+  },
+
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true
+  },
+
+  password: {
+    type: String,
+    required: true,
+    select: false
+  },
+
+  role: {
+    type: String,
+    default: "author"
+  },
+
+  bio: String
+
+}, { timestamps: true }));
 const Category=m.model("Category",new m.Schema({name:{type:String,unique:true},slug:{type:String,unique:true},active:{type:Boolean,default:true}},{timestamps:true}));
 const Subcategory=m.model("Subcategory",new m.Schema({name:String,slug:{type:String,unique:true},category:{type:m.Schema.Types.ObjectId,ref:"Category"},active:{type:Boolean,default:true}},{timestamps:true}));
 const Article=m.model("Article",new m.Schema({headline:{type:String,required:true},slug:{type:String,unique:true,index:true},subtitle:String,summary:String,author:{type:m.Schema.Types.ObjectId,ref:"User"},place:String,articleType:{type:String,default:"NEWS"},categories:[{type:m.Schema.Types.ObjectId,ref:"Category"}],subcategories:[{type:m.Schema.Types.ObjectId,ref:"Subcategory"}],tags:[String],heroImage:{url:String,alt:String,caption:String,credit:String},content:[block],sources:[{title:String,url:String,publisher:String,publicationDate:Date,description:String}],status:{type:String,enum:["draft","published","scheduled","archived"],default:"draft"},scheduledAt:Date,featured:Boolean,trending:Boolean,breaking:Boolean,commentsEnabled:{type:Boolean,default:true},disclosure:String,seo:{title:String,description:String,canonicalUrl:String,ogImage:String,keywords:[String]},views:{type:Number,default:0},publishedAt:Date},{timestamps:true}));

@@ -1,6 +1,59 @@
 const r=require("express").Router(),bcrypt=require("bcryptjs"),jwt=require("jsonwebtoken"),slugify=require("slugify");
 const {protect,authorOnly}=require("./middleware/auth");const {User,Category,Subcategory,Article,Comment,Media,Settings}=require("./models");
-r.post("/auth/login",async(q,s,n)=>{try{const u=await User.findOne({email:q.body.email}).select("+password");if(!u||!(await bcrypt.compare(q.body.password,u.password)))return s.status(401).json({message:"Invalid email or password"});const token=jwt.sign({id:u._id},process.env.JWT_SECRET,{expiresIn:"7d"});s.json({token,user:{id:u._id,name:u.name,email:u.email,role:u.role}})}catch(e){n(e)}});
+r.post("/auth/login", async (q, s, n) => {
+  try {
+    const identifier = q.body.email?.trim();
+    const password = q.body.password;
+
+    if (!identifier || !password) {
+      return s.status(400).json({
+        message: "Username/email and password are required"
+      });
+    }
+
+    const u = await User.findOne({
+      $or: [
+        { email: identifier.toLowerCase() },
+        { name: { $regex: `^${identifier}$`, $options: "i" } }
+      ]
+    }).select("+password");
+
+    if (!u) {
+      return s.status(401).json({
+        message: "Invalid username/email or password"
+      });
+    }
+
+    const passwordMatches = await bcrypt.compare(
+      password,
+      u.password
+    );
+
+    if (!passwordMatches) {
+      return s.status(401).json({
+        message: "Invalid username/email or password"
+      });
+    }
+
+    const token = jwt.sign(
+      { id: u._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    s.json({
+      token,
+      user: {
+        id: u._id,
+        name: u.name,
+        email: u.email,
+        role: u.role
+      }
+    });
+  } catch (e) {
+    n(e);
+  }
+});
 r.get("/auth/me",protect,authorOnly,(q,s)=>s.json({user:q.user}));
 r.get("/categories",async(q,s,n)=>{try{s.json({categories:await Category.find({active:true}).sort({name:1}),subcategories:await Subcategory.find({active:true}).populate("category").sort({name:1})})}catch(e){n(e)}});
 r.get("/categories/admin/all",protect,authorOnly,async(q,s,n)=>{try{s.json({categories:await Category.find().sort({name:1}),subcategories:await Subcategory.find().populate("category").sort({name:1})})}catch(e){n(e)}});

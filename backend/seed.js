@@ -131,54 +131,50 @@ async function connectDatabase() {
 // ------------------------------------------------------------
 
 async function seedAuthor() {
-  const loginUser = process.env.ADMIN_USER?.trim();
-
+  const username = process.env.ADMIN_USER?.trim();
+  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   const rawPassword = process.env.ADMIN_PASSWORD;
 
-  if (!loginUser) {
-    throw new Error(
-      "ADMIN_USER is missing from the environment variables."
-    );
+  if (!username) {
+    throw new Error("ADMIN_USER is missing.");
+  }
+
+  if (!email) {
+    throw new Error("ADMIN_EMAIL is missing.");
   }
 
   if (!rawPassword) {
-    throw new Error(
-      "ADMIN_PASSWORD is missing from the environment variables."
-    );
+    throw new Error("ADMIN_PASSWORD is missing.");
   }
 
   if (rawPassword.length < 8) {
-    throw new Error(
-      "ADMIN_PASSWORD must contain at least 8 characters."
-    );
+    throw new Error("ADMIN_PASSWORD must contain at least 8 characters.");
   }
 
-  // The existing authentication system uses the User.email
-  // field as the login identifier.
-  const email = loginUser.toLowerCase();
-
-  const hashedPassword = await bcrypt.hash(
-    rawPassword,
-    12
-  );
+  const hashedPassword = await bcrypt.hash(rawPassword, 12);
 
   const author = await User.findOneAndUpdate(
     { email },
     {
-      name: "Author",
-      slug: "author",
+      name: username,
+      slug: slugify(username, {
+        lower: true,
+        strict: true
+      }),
       email,
       password: hashedPassword,
-      role: "author",
+      role: "author"
     },
     {
       upsert: true,
       new: true,
-      setDefaultsOnInsert: true,
+      setDefaultsOnInsert: true
     }
   );
 
-  console.log(`✓ Author account ready: ${email}`);
+  console.log(`✓ Author account ready`);
+  console.log(`  Username: ${username}`);
+  console.log(`  Email: ${email}`);
 
   return author;
 }
