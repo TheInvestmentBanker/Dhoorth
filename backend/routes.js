@@ -11,45 +11,48 @@ r.post("/auth/login", async (q, s, n) => {
       });
     }
 
-    const u = await User.findOne({
-      $or: [
-        { email: identifier.toLowerCase() },
-        { name: { $regex: `^${identifier}$`, $options: "i" } }
-      ]
-    }).select("+password");
+    const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+    const adminUser = process.env.ADMIN_USER?.trim();
+    const adminPassword = process.env.ADMIN_PASSWORD;
 
-    if (!u) {
-      return s.status(401).json({
-        message: "Invalid username/email or password"
-      });
-    }
+    const identifierLower = identifier.toLowerCase();
 
-    const passwordMatches = await bcrypt.compare(
-      password,
-      u.password
-    );
+    const validIdentifier =
+      identifierLower === adminEmail ||
+      identifier === adminUser;
 
-    if (!passwordMatches) {
+    const validPassword =
+      password === adminPassword;
+
+    if (!validIdentifier || !validPassword) {
       return s.status(401).json({
         message: "Invalid username/email or password"
       });
     }
 
     const token = jwt.sign(
-      { id: u._id },
+      {
+        id: "admin",
+        name: adminUser,
+        email: adminEmail,
+        role: "author"
+      },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      {
+        expiresIn: "7d"
+      }
     );
 
     s.json({
       token,
       user: {
-        id: u._id,
-        name: u.name,
-        email: u.email,
-        role: u.role
+        id: "admin",
+        name: adminUser,
+        email: adminEmail,
+        role: "author"
       }
     });
+
   } catch (e) {
     n(e);
   }
