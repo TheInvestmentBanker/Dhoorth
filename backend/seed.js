@@ -15,20 +15,31 @@ const {
 // ============================================================
 // DHOORTH — DATABASE SEED
 // ============================================================
-// This script creates/updates:
+// Creates / updates:
 //   1. Author account
 //   2. Categories
 //   3. Subcategories
 //   4. Site settings
-//   5. Demo article (only if database has no articles)
+//   5. Demo article — only when database has no articles
+//
+// Required environment variables:
+//
+//   MONGO_URI
+//   ADMIN_USER
+//   ADMIN_PASSWORD
+//
+// ADMIN_USER is the Author login identifier.
+// The current User model stores this value in the `email` field,
+// so we keep that field for compatibility with the existing
+// authentication system.
 //
 // IMPORTANT:
-// ADMIN_EMAIL and ADMIN_PASSWORD should exist in .env
+// Never put these secrets in the frontend.
 // ============================================================
 
 
 // ------------------------------------------------------------
-// 1. FIXED CATEGORIES
+// 1. CATEGORIES
 // ------------------------------------------------------------
 
 const categories = [
@@ -50,11 +61,7 @@ const categories = [
 
 
 // ------------------------------------------------------------
-// 2. FIXED SUBCATEGORIES
-// ------------------------------------------------------------
-// The system remains flexible:
-// the Author can add more categories/subcategories later
-// through the Admin panel.
+// 2. SUBCATEGORIES
 // ------------------------------------------------------------
 
 const subcategories = {
@@ -65,7 +72,7 @@ const subcategories = {
     "Pakistan Section",
   ],
 
-  "Technology": [
+  Technology: [
     "AI & ML",
     "Infrastructure",
     "Transportation",
@@ -92,7 +99,7 @@ const subcategories = {
     "Planetary Science",
   ],
 
-  "Finance": [
+  Finance: [
     "Markets",
     "Economy",
     "Business & Industry",
@@ -105,13 +112,15 @@ const subcategories = {
 // ------------------------------------------------------------
 
 async function connectDatabase() {
-  if (!process.env.MONGO_URI) {
+  const mongoUri = process.env.MONGO_URI?.trim();
+
+  if (!mongoUri) {
     throw new Error(
       "MONGO_URI is missing from the environment variables."
     );
   }
 
-  await mongoose.connect(process.env.MONGO_URI);
+  await mongoose.connect(mongoUri);
 
   console.log("✓ Connected to MongoDB");
 }
@@ -122,19 +131,19 @@ async function connectDatabase() {
 // ------------------------------------------------------------
 
 async function seedAuthor() {
-  const email = (
-    process.env.ADMIN_USER || "strandedincosmos@gmail.com"
-  )
-    .trim()
-    .toLowerCase();
+  const loginUser = process.env.ADMIN_USER?.trim();
 
   const rawPassword = process.env.ADMIN_PASSWORD;
 
-  // Never silently create a known default password.
+  if (!loginUser) {
+    throw new Error(
+      "ADMIN_USER is missing from the environment variables."
+    );
+  }
+
   if (!rawPassword) {
     throw new Error(
-      "ADMIN_PASSWORD is missing from the environment. " +
-      "Set a strong password before running the seed script."
+      "ADMIN_PASSWORD is missing from the environment variables."
     );
   }
 
@@ -144,7 +153,14 @@ async function seedAuthor() {
     );
   }
 
-  const password = await bcrypt.hash(rawPassword, 12);
+  // The existing authentication system uses the User.email
+  // field as the login identifier.
+  const email = loginUser.toLowerCase();
+
+  const hashedPassword = await bcrypt.hash(
+    rawPassword,
+    12
+  );
 
   const author = await User.findOneAndUpdate(
     { email },
@@ -152,7 +168,7 @@ async function seedAuthor() {
       name: "Author",
       slug: "author",
       email,
-      password,
+      password: hashedPassword,
       role: "author",
     },
     {
@@ -198,7 +214,9 @@ async function seedCategories() {
     categoryMap[name] = category;
   }
 
-  console.log(`✓ ${categories.length} categories ready`);
+  console.log(
+    `✓ ${categories.length} categories ready`
+  );
 
   return categoryMap;
 }
@@ -250,21 +268,20 @@ async function seedSubcategories(categoryMap) {
     }
   }
 
-  console.log(`✓ ${count} subcategories ready`);
+  console.log(
+    `✓ ${count} subcategories ready`
+  );
 }
 
 
 // ------------------------------------------------------------
 // 7. SITE SETTINGS
 // ------------------------------------------------------------
-// These are stored in MongoDB so the Author can eventually
-// modify them through the Admin Settings page without editing
-// source code.
-// ------------------------------------------------------------
 
 async function seedSettings() {
   const siteSettings = {
     siteName: "DHOORTH",
+
     description:
       "Independent publication for news, analysis, research and long-form stories.",
 
@@ -272,7 +289,6 @@ async function seedSettings() {
 
     adsEnabled: true,
 
-    // Author can eventually control these from the CMS.
     socialLinks: {
       twitter: "",
       instagram: "",
@@ -306,11 +322,10 @@ async function seedSettings() {
 // ------------------------------------------------------------
 // 8. CREATE DEMO ARTICLE
 // ------------------------------------------------------------
-// Only creates the demo article if the database currently
-// contains ZERO articles.
+// The demo article is created ONLY when there are zero articles.
 //
-// This prevents re-running seed.js from overwriting real
-// articles.
+// Once you publish real articles, running seed.js again will NOT
+// overwrite them or recreate the demo article.
 // ------------------------------------------------------------
 
 async function seedDemoArticle(author, categoryMap) {
@@ -335,9 +350,11 @@ async function seedDemoArticle(author, categoryMap) {
   }
 
   await Article.create({
-    headline: "A Modular Editorial Platform — Demo Story",
+    headline:
+      "A Modular Editorial Platform — Demo Story",
 
-    slug: "modular-editorial-platform-demo",
+    slug:
+      "modular-editorial-platform-demo",
 
     subtitle:
       "DEMO CONTENT — replace before publication",
@@ -345,11 +362,14 @@ async function seedDemoArticle(author, categoryMap) {
     summary:
       "Sample article showing the publication architecture.",
 
-    articleType: "DEEP DIVE",
+    articleType:
+      "DEEP DIVE",
 
-    author: author._id,
+    author:
+      author._id,
 
-    place: "",
+    place:
+      "",
 
     categories: [
       technology._id,
@@ -373,7 +393,8 @@ async function seedDemoArticle(author, categoryMap) {
       {
         type: "heading",
 
-        heading: "Build stories from blocks",
+        heading:
+          "Build stories from blocks",
 
         level: 2,
       },
@@ -388,19 +409,26 @@ async function seedDemoArticle(author, categoryMap) {
 
     sources: [],
 
-    status: "published",
+    status:
+      "published",
 
-    publishedAt: new Date(),
+    publishedAt:
+      new Date(),
 
-    featured: true,
+    featured:
+      true,
 
-    trending: true,
+    trending:
+      true,
 
-    breaking: false,
+    breaking:
+      false,
 
-    commentsEnabled: true,
+    commentsEnabled:
+      true,
 
-    views: 0,
+    views:
+      0,
   });
 
   console.log("✓ Demo article created");
@@ -419,16 +447,22 @@ async function seed() {
     console.log("========================================");
     console.log("");
 
+    // Connect
     await connectDatabase();
 
+    // Author
     const author = await seedAuthor();
 
+    // Categories
     const categoryMap = await seedCategories();
 
+    // Subcategories
     await seedSubcategories(categoryMap);
 
+    // Site settings
     await seedSettings();
 
+    // Demo article
     await seedDemoArticle(
       author,
       categoryMap
@@ -446,18 +480,25 @@ async function seed() {
     console.error("          SEED FAILED ✗");
     console.error("========================================");
     console.error("");
-    console.error(error.message);
+
+    console.error(
+      error.stack || error.message
+    );
+
     console.error("");
+
     process.exitCode = 1;
 
   } finally {
-    await mongoose.connection.close();
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.connection.close();
+    }
   }
 }
 
 
 // ------------------------------------------------------------
-// RUN
+// 10. RUN
 // ------------------------------------------------------------
 
 seed();
