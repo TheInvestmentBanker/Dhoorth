@@ -131,24 +131,18 @@ async function connectDatabase() {
 // ------------------------------------------------------------
 
 async function seedAuthor() {
-  const username = process.env.ADMIN_USER?.trim();
-  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  const rawPassword = process.env.ADMIN_PASSWORD;
+  // ============================================================
+  // DHOORTH — FIXED AUTHOR CREDENTIALS
+  // ============================================================
 
-  if (!username) {
-    throw new Error("ADMIN_USER is missing.");
-  }
-
-  if (!email) {
-    throw new Error("ADMIN_EMAIL is missing.");
-  }
-
-  if (!rawPassword) {
-    throw new Error("ADMIN_PASSWORD is missing.");
-  }
+  const username = "RudeRG";
+  const email = "strandedincosmos@gmail.com";
+  const rawPassword = "PUT_YOUR_PASSWORD_HERE";
 
   if (rawPassword.length < 8) {
-    throw new Error("ADMIN_PASSWORD must contain at least 8 characters.");
+    throw new Error(
+      "The hard-coded author password must contain at least 8 characters."
+    );
   }
 
   const hashedPassword = await bcrypt.hash(rawPassword, 12);
@@ -159,20 +153,20 @@ async function seedAuthor() {
       name: username,
       slug: slugify(username, {
         lower: true,
-        strict: true
+        strict: true,
       }),
       email,
       password: hashedPassword,
-      role: "author"
+      role: "author",
     },
     {
       upsert: true,
       new: true,
-      setDefaultsOnInsert: true
+      setDefaultsOnInsert: true,
     }
   );
 
-  console.log(`✓ Author account ready`);
+  console.log("✓ Author account ready");
   console.log(`  Username: ${username}`);
   console.log(`  Email: ${email}`);
 
