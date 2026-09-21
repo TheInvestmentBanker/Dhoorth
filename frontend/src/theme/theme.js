@@ -1,0 +1,4 @@
+import {createTheme} from "@mui/material/styles";
+export const LIGHT={primary:"#243b4a",secondary:"#9a5b2f",background:"#f5f4f0",surface:"#ffffff",text:"#17191c",muted:"#676b70",border:"#d7d6d0",accent:"#ad4932"};
+export const DARK={primary:"#9ec5dd",secondary:"#d9a276",background:"#0d0f11",surface:"#171a1d",text:"#f0f1f2",muted:"#aeb3b8",border:"#30353a",accent:"#e07b60"};
+export const makeTheme=mode=>{const c=mode==="dark"?DARK:LIGHT;return createTheme({palette:{mode,primary:{main:c.primary},secondary:{main:c.secondary},background:{default:c.background,paper:c.surface},text:{primary:c.text,secondary:c.muted},divider:c.border},typography:{fontFamily:'"Inter","Roboto","Arial",sans-serif',h1:{fontFamily:"Georgia,serif",fontWeight:800},h2:{fontFamily:"Georgia,serif",fontWeight:800},h3:{fontFamily:"Georgia,serif",fontWeight:800},button:{textTransform:"none",fontWeight:700}},shape:{borderRadius:6}})};

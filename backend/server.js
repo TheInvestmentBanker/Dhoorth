@@ -1,0 +1,11 @@
+require("dotenv").config();
+const express=require("express"),cors=require("cors"),helmet=require("helmet"),morgan=require("morgan"),mongoose=require("mongoose"),rateLimit=require("express-rate-limit");
+const api=require("./routes");
+const app=express();
+app.use(helmet({crossOriginResourcePolicy:{policy:"cross-origin"}}));
+app.use(cors({origin:process.env.CLIENT_URL?.split(",")||true,credentials:true}));
+app.use(express.json({limit:"3mb"}));app.use(morgan("dev"));app.use(rateLimit({windowMs:900000,max:500}));
+app.get("/api/health",(q,s)=>s.json({ok:true}));
+app.use("/api",api);
+app.use((e,q,s,n)=>{console.error(e);s.status(e.status||500).json({message:e.message||"Server error"})});
+mongoose.connect(process.env.MONGO_URI).then(()=>app.listen(process.env.PORT||5000,()=>console.log("API running"))).catch(e=>{console.error(e);process.exit(1)});
