@@ -11,6 +11,15 @@ const api = require("./routes");
 
 const app = express();
 
+const PORT = process.env.PORT || 5000;
+
+const allowedOrigins = (process.env.CLIENT_URL || "")
+  .split(",")
+  .map((origin) => origin.trim().replace(/\/$/, ""))
+  .filter(Boolean);
+
+
+console.log("Allowed CORS origins:", allowedOrigins);
 /* =========================
    SECURITY
 ========================= */
@@ -27,44 +36,38 @@ app.use(
    CORS
 ========================= */
 
-const allowedOrigins = (
-  process.env.FRONTEND_URL ||
-  process.env.CLIENT_URL ||
-  ""
-)
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
 app.use(
   cors({
-    origin: (origin, callback) => {
+    origin: function (origin, callback) {
       // Allow requests without an Origin header
-      // (health checks, server-to-server requests, etc.)
+      // (Postman, curl, server-to-server, etc.)
       if (!origin) {
         return callback(null, true);
       }
 
-      // If no frontend URL has been configured,
-      // reject browser origins rather than accidentally
-      // allowing every website.
-      if (allowedOrigins.length === 0) {
-        return callback(new Error("CORS: FRONTEND_URL is not configured"));
-      }
+      const cleanOrigin = origin.replace(/\/$/, "");
 
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.includes(cleanOrigin)) {
         return callback(null, true);
       }
 
-      return callback(new Error(`CORS: Origin ${origin} is not allowed`));
+      console.log("Blocked CORS origin:", origin);
+
+      return callback(
+        new Error("Not allowed by CORS")
+      );
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
 /* =========================
    MIDDLEWARE
 ========================= */
+
+app.options("*", cors());
 
 app.use(express.json({ limit: "3mb" }));
 
@@ -86,7 +89,7 @@ app.use(
 app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
-    service: "Dhoorth API",
+    message: "Dhoorth API is running",
   });
 });
 
@@ -112,12 +115,10 @@ app.use((err, req, res, next) => {
    DATABASE + SERVER
 ========================= */
 
-const PORT = process.env.PORT || 5000;
-
-if (!process.env.MONGO_URI) {
-  console.error("MONGO_URI is missing.");
-  process.exit(1);
-}
+///if (!process.env.MONGO_URI) {
+  ///console.error("MONGO_URI is missing.");
+  ///process.exit(1);
+///}
 
 mongoose
   .connect(process.env.MONGO_URI)
