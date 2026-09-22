@@ -32,6 +32,8 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import api from "./api";
 import { useAuth, useThemeMode } from "./context";
+import DarkLogo from "./assets/Dark.png";
+import LightLogo from "./assets/Light.png";
 
 
 export function Header() {
@@ -71,68 +73,61 @@ export function Header() {
           }}
         >
           {/* Logo / Publication Name */}
-          <Box
-            component={Link}
-            to="/"
-            sx={{
-              textDecoration: "none",
-              color: "inherit",
-              minWidth: {
-                xs: 150,
-                md: 230,
-              },
-            }}
-          >
-            <Typography
-              variant="overline"
-              color="text.secondary"
-              sx={{
-                letterSpacing: ".15em",
-              }}
-            >
-              LOGO
-            </Typography>
+<Box
+  component={Link}
+  to="/"
+  sx={{
+    textDecoration: "none",
+    color: "inherit",
+    minWidth: {
+      xs: 150,
+      md: 230,
+    },
+    display: "flex",
+    alignItems: "center",
+  }}
+>
+  <Box
+    component="img"
+    src={mode === "dark" ? LightLogo : DarkLogo}
+    alt="Dhoorth"
+    sx={{
+      height: {
+        xs: 38,
+        md: 48,
+      },
+      width: "auto",
+      display: "block",
+      objectFit: "contain",
+    }}
+  />
+</Box>
 
-            <Typography
-              sx={{
-                fontFamily: "Georgia,serif",
-                fontWeight: 800,
-                fontSize: {
-                  xs: 18,
-                  md: 24,
-                },
-              }}
-            >
-              PUBLICATION_NAME
-            </Typography>
-          </Box>
+{/* Desktop Navigation */}
+<Stack
+  direction="row"
+  sx={{
+    flex: 1,
+    display: {
+      xs: "none",
+      md: "flex",
+    },
+  }}
+>
+  {cats.slice(0, 5).map((c) => (
+    <Button
+      component={Link}
+      to={"/category/" + c.slug}
+      key={c._id}
+    >
+      {c.name}
+    </Button>
+  ))}
 
-
-          {/* Desktop Navigation */}
-          <Stack
-            direction="row"
-            sx={{
-              flex: 1,
-              display: {
-                xs: "none",
-                md: "flex",
-              },
-            }}
-          >
-            {cats.slice(0, 5).map((c) => (
-              <Button
-                component={Link}
-                to={"/category/" + c.slug}
-                key={c._id}
-              >
-                {c.name}
-              </Button>
-            ))}
-
-            <Button component={Link} to="/articles">
-              Articles
-            </Button>
-          </Stack>
+  <Button component={Link} to="/articles">
+    Articles
+  </Button>
+</Stack>   
 
 
           {/* Header Actions */}
