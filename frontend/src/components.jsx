@@ -79,12 +79,17 @@ export function Header() {
   sx={{
     textDecoration: "none",
     color: "inherit",
+    display: "flex",
+    alignItems: "center",
+    gap: 1.2,
     minWidth: {
       xs: 150,
       md: 230,
     },
-    display: "flex",
-    alignItems: "center",
+    ml: {
+      xs: -1,
+      md: -1,
+    },
   }}
 >
   <Box
@@ -101,6 +106,18 @@ export function Header() {
       objectFit: "contain",
     }}
   />
+  <Typography
+        sx={{
+        fontFamily: "Poppins,serif",
+        fontWeight: 800,
+        fontSize: {
+             xs: 18,
+             md: 24,
+             },
+          }}
+        >
+         DHOORTH
+  </Typography>
 </Box>
 
 {/* Desktop Navigation */}
