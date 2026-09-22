@@ -79,12 +79,15 @@ export function Header() {
   sx={{
     textDecoration: "none",
     color: "inherit",
-    display: "flex",
-    alignItems: "center",
-    gap: 1.2,
     minWidth: {
       xs: 150,
       md: 230,
+    },
+    display: "flex",
+    alignItems: "center",
+    gap: {
+      xs: 1,
+      md: 1.5,
     },
     ml: {
       xs: -1,
@@ -98,12 +101,13 @@ export function Header() {
     alt="Dhoorth"
     sx={{
       height: {
-        xs: 38,
-        md: 48,
+        xs: 40,
+        md: 50,
       },
       width: "auto",
       display: "block",
       objectFit: "contain",
+      flexShrink: 0,
     }}
   />
   <Typography
@@ -111,10 +115,13 @@ export function Header() {
         fontFamily: "Poppins,serif",
         fontWeight: 800,
         fontSize: {
-             xs: 18,
-             md: 24,
-             },
-          }}
+        xs: 18,
+        md: 24,
+        },
+        letterSpacing: "0.01em",
+        lineHeight: 1,
+        whiteSpace: "nowrap",
+        }}
         >
          DHOORTH
   </Typography>
@@ -129,6 +136,7 @@ export function Header() {
       xs: "none",
       md: "flex",
     },
+    alignItems: "center",
   }}
 >
   {cats.slice(0, 5).map((c) => (
