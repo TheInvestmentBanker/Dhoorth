@@ -121,6 +121,7 @@ export function Header() {
         letterSpacing: "0.01em",
         lineHeight: 1,
         whiteSpace: "nowrap",
+        
         }}
         >
          DHOORTH
@@ -155,6 +156,7 @@ export function Header() {
   sx={{
     position: "relative",
     top: "-18px",
+    left: "-25px",
   }}
   >
     Articles
