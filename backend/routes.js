@@ -359,7 +359,7 @@ r.get(
           status: "published"
         })
           .populate(
-            "author categories subcategories relatedArticles"
+            "author categories subcategories"
           );
 
       if (!a) {
