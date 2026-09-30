@@ -433,10 +433,14 @@ export function CardArticle({
         <Box
           sx={{
             height: featured ? 300 : 190,
-            background:
-              "linear-gradient(135deg,#bdbdbd,#4b4b4b)",
-          }}
-        />
+            backgroundImage: a.heroImage?.url
+            ? `url(${a.heroImage.url})`
+            : "linear-gradient(135deg,#bdbdbd,#4b4b4b)",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            }}
+         />
 
         <CardContent>
 
@@ -484,15 +488,27 @@ export function ArticleRenderer({
         b.type === "heading" ? (
 
           <Typography
-            key={i}
-            variant={b.level === 3 ? "h3" : "h2"}
-            sx={{
-              mt: 5,
-              mb: 2,
-            }}
-          >
-            {b.heading || b.text}
-          </Typography>
+  key={i}
+  variant={b.level === 3 ? "h3" : "h2"}
+  sx={{
+    mt: 5,
+    mb: 2,
+    fontSize:
+      b.level === 3
+        ? {
+            xs: "1.8rem",
+            md: "2rem",
+          }
+        : {
+            xs: "2rem",
+            md: "2.25rem",
+          },
+    lineHeight: 1.15,
+    fontWeight: 700,
+  }}
+>
+  {b.heading || b.text}
+</Typography>
 
         ) : b.type === "image" ? (
 
@@ -592,28 +608,41 @@ export function ArticleRenderer({
         ) : (
 
           <Typography
-            key={i}
-            component="p"
-            sx={{
-              fontSize: {
-                xs: "1.05rem",
-                md: "1.15rem",
-              },
-              lineHeight: 1.9,
-              mb: 2.5,
-              whiteSpace:
-                b.type === "list"
-                  ? "pre-line"
-                  : "normal",
-            }}
-          >
-            {b.type === "list"
-              ? (b.items || [])
-                  .map((x) => "• " + x)
-                  .join("\n")
-              : b.text}
-          </Typography>
+  key={i}
+  component="p"
+  sx={{
+    fontSize: {
+      xs: "1.05rem",
+      md: "1.15rem",
+    },
+    lineHeight: 1.9,
+    mb: 2.5,
+    textAlign: "justify",
+    whiteSpace:
+      b.type === "list"
+        ? "pre-line"
+        : "normal",
 
+    ...(i === 0 && b.type === "paragraph"
+      ? {
+          "&::first-letter": {
+            fontSize: "4.5rem",
+            fontWeight: 700,
+            lineHeight: 0.85,
+            float: "left",
+            mr: 1,
+            mt: 0.5,
+          },
+        }
+      : {}),
+  }}
+>
+  {b.type === "list"
+    ? (b.items || [])
+        .map((x) => "• " + x)
+        .join("\n")
+    : b.text}
+</Typography>
         )
       )}
     </Box>
