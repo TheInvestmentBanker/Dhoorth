@@ -420,11 +420,9 @@ r.get(
   async (q, s, n) => {
     try {
       const article =
-        await Article.findById(
-          q.params.id
-        ).populate(
-          "categories subcategories"
-        );
+  await Article.findById(
+    q.params.id
+  );
 
       if (!article) {
         return s.status(404).json({
