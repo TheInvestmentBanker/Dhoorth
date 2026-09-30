@@ -37,7 +37,33 @@ const User = m.model("User", new m.Schema({
 }, { timestamps: true }));
 const Category=m.model("Category",new m.Schema({name:{type:String,unique:true},slug:{type:String,unique:true},active:{type:Boolean,default:true}},{timestamps:true}));
 const Subcategory=m.model("Subcategory",new m.Schema({name:String,slug:{type:String,unique:true},category:{type:m.Schema.Types.ObjectId,ref:"Category"},active:{type:Boolean,default:true}},{timestamps:true}));
-const Article=m.model("Article",new m.Schema({headline:{type:String,required:true},slug:{type:String,unique:true,index:true},subtitle:String,summary:String,author:{type:m.Schema.Types.ObjectId,ref:"User"},place:String,articleType:{type:String,default:"NEWS"},categories:[{type:m.Schema.Types.ObjectId,ref:"Category"}],subcategories:[{type:m.Schema.Types.ObjectId,ref:"Subcategory"}],tags:[String],heroImage:{url:String,alt:String,caption:String,credit:String},content:[block],sources:[{title:String,url:String,publisher:String,publicationDate:Date,description:String}],status:{type:String,enum:["draft","published","scheduled","archived"],default:"draft"},scheduledAt:Date,featured:Boolean,trending:Boolean,breaking:Boolean,commentsEnabled:{type:Boolean,default:true},disclosure:String,seo:{title:String,description:String,canonicalUrl:String,ogImage:String,keywords:[String]},views:{type:Number,default:0},publishedAt:Date},{timestamps:true}));
+const Article=m.model("Article",new m.Schema({
+  headline:{type:String,required:true},
+  slug:{type:String,unique:true,index:true},
+  subtitle:String,
+  summary:String,
+  authorName:{
+    type:String,
+    trim:true
+  },
+
+  author:{
+    type:m.Schema.Types.ObjectId,
+    ref:"User"
+  },
+  articleType:{type:String,default:"NEWS"},
+  categories:[{type:m.Schema.Types.ObjectId,ref:"Category"}],
+  subcategories:[{type:m.Schema.Types.ObjectId,ref:"Subcategory"}],
+  tags:[String],heroImage:{url:String,alt:String,caption:String,credit:String},
+  content:[block],sources:[{title:String,url:String,publisher:String,publicationDate:Date,description:String}],
+  status:{type:String,enum:["draft","published","scheduled","archived"],default:"draft"},
+  scheduledAt:Date,featured:Boolean,trending:Boolean,breaking:Boolean,
+  commentsEnabled:{type:Boolean,default:true},
+  disclosure:String,
+  seo:{title:String,description:String,canonicalUrl:String,ogImage:String,keywords:[String]},
+  views:{type:Number,default:0},
+  publishedAt:Date},{timestamps:true}
+));
 const Comment=m.model("Comment",new m.Schema({article:{type:m.Schema.Types.ObjectId,ref:"Article"},name:String,email:{type:String,select:false},content:{type:String,maxlength:2000},status:{type:String,enum:["pending","approved","rejected","spam"],default:"pending"}},{timestamps:true}));
 const Media=m.model("Media",new m.Schema({type:String,url:String,publicId:String,title:String,alt:String,caption:String,credit:String,mimeType:String},{timestamps:true}));
 const Settings=m.model("Settings",new m.Schema({key:{type:String,unique:true},value:m.Schema.Types.Mixed},{timestamps:true}));
