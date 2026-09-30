@@ -616,7 +616,7 @@ export function ArticleRenderer({
       md: "1.15rem",
     },
     lineHeight: 1.9,
-    mb: 2.5,
+    mb: 1.25,
     textAlign: "justify",
     whiteSpace: "pre-line",
 

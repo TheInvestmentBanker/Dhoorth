@@ -562,10 +562,66 @@ function Comments({
     return null;
   }
 
+  const timeAgo = (date) => {
+    if (!date) return "";
+
+    const seconds = Math.floor(
+      (Date.now() - new Date(date).getTime()) / 1000
+    );
+
+    if (seconds < 60) {
+      return "Just now";
+    }
+
+    const minutes = Math.floor(
+      seconds / 60
+    );
+
+    if (minutes < 60) {
+      return `${minutes} ${
+        minutes === 1 ? "minute" : "minutes"
+      } ago`;
+    }
+
+    const hours = Math.floor(
+      minutes / 60
+    );
+
+    if (hours < 24) {
+      return `${hours} ${
+        hours === 1 ? "hour" : "hours"
+      } ago`;
+    }
+
+    const days = Math.floor(
+      hours / 24
+    );
+
+    if (days < 30) {
+      return `${days} ${
+        days === 1 ? "day" : "days"
+      } ago`;
+    }
+
+    const months = Math.floor(
+      days / 30
+    );
+
+    return `${months} ${
+      months === 1 ? "month" : "months"
+    } ago`;
+  };
+
   return (
     <Box sx={{ mt: 7 }}>
 
-      <Typography variant="h5">
+      <Typography
+        variant="h5"
+        sx={{
+          fontWeight: 700,
+          mb: 3
+        }}
+      >
         Comments
       </Typography>
 
@@ -575,6 +631,7 @@ function Comments({
         </Alert>
       )}
 
+      {/* Comment Form */}
       <Box
         component="form"
         onSubmit={async (e) => {
@@ -598,7 +655,9 @@ function Comments({
             "Comment submitted for moderation."
           );
         }}
-        sx={{ my: 3 }}
+        sx={{
+          mb: 5
+        }}
       >
 
         <Stack spacing={2}>
@@ -644,6 +703,9 @@ function Comments({
           <Button
             type="submit"
             variant="contained"
+            sx={{
+              alignSelf: "flex-start"
+            }}
           >
             Submit Comment
           </Button>
@@ -652,22 +714,94 @@ function Comments({
 
       </Box>
 
-      {c.map((x) => (
-        <Box
-          key={x._id}
-          sx={{
-            py: 2,
-            borderTop: 1,
-            borderColor: "divider"
-          }}
-        >
-          <b>{x.name}</b>
+      {/* Published Comments */}
+      <Stack spacing={3}>
 
-          <Typography>
-            {x.content}
-          </Typography>
-        </Box>
-      ))}
+        {c.map((x) => (
+
+          <Box
+            key={x._id}
+            sx={{
+              display: "flex",
+              gap: 2,
+              py: 2.5,
+              borderTop: 1,
+              borderColor: "divider"
+            }}
+          >
+
+            {/* Avatar */}
+            <Box
+              sx={{
+                width: 44,
+                height: 44,
+                minWidth: 44,
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: "action.hover",
+                color: "text.primary",
+                fontWeight: 700,
+                fontSize: "1.1rem"
+              }}
+            >
+              {(x.name || "?")
+                .charAt(0)
+                .toUpperCase()}
+            </Box>
+
+            {/* Comment Content */}
+            <Box
+              sx={{
+                flex: 1,
+                minWidth: 0
+              }}
+            >
+
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="baseline"
+                sx={{
+                  flexWrap: "wrap"
+                }}
+              >
+
+                <Typography
+                  sx={{
+                    fontWeight: 700
+                  }}
+                >
+                  {x.name}
+                </Typography>
+
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                >
+                  {timeAgo(x.createdAt)}
+                </Typography>
+
+              </Stack>
+
+              <Typography
+                sx={{
+                  mt: 0.75,
+                  lineHeight: 1.7,
+                  fontSize: "1rem"
+                }}
+              >
+                {x.content}
+              </Typography>
+
+            </Box>
+
+          </Box>
+
+        ))}
+
+      </Stack>
 
     </Box>
   );
