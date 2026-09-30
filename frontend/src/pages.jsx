@@ -383,7 +383,9 @@ export function Article() {
 
       <Typography sx={{ mt: 3 }}>
         By{" "}
-        <b>{a.author?.name}</b>
+        <b>
+        {a.authorName || a.author?.name}
+        </b>
 
         {a.place && " · " + a.place}
       </Typography>

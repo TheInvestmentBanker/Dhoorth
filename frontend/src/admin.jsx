@@ -508,6 +508,7 @@ export function Editor() {
     headline: "",
     subtitle: "",
     summary: "",
+    authorName: "",
     place: "",
     articleType: "NEWS",
     heroImage: {
@@ -719,7 +720,17 @@ useEffect(() => {
                 )
               }
             />
-
+            <TextField
+              label="Author Name"
+              value={d.authorName}
+              onChange={(e) =>
+              setD({
+                ...d,
+                authorName: e.target.value,
+              })
+              }
+              fullWidth
+             />
 
             <TextField
               label="Place"

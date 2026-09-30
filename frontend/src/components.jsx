@@ -618,10 +618,7 @@ export function ArticleRenderer({
     lineHeight: 1.9,
     mb: 2.5,
     textAlign: "justify",
-    whiteSpace:
-      b.type === "list"
-        ? "pre-line"
-        : "normal",
+    whiteSpace: "pre-line",
 
     ...(i === 0 && b.type === "paragraph"
       ? {
