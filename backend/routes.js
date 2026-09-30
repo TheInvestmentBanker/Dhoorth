@@ -1,5 +1,36 @@
-const r=require("express").Router(),bcrypt=require("bcryptjs"),jwt=require("jsonwebtoken"),slugify=require("slugify");
-const {protect,authorOnly}=require("./middleware/auth");const {User,Category,Subcategory,Article,Comment,Media,Settings}=require("./models");
+const r = require("express").Router();
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const slugify = require("slugify");
+const multer = require("multer");
+
+const cloudinary = require("./cloudinary");
+
+const { protect, authorOnly } = require("./middleware/auth");
+const {
+  User,
+  Category,
+  Subcategory,
+  Article,
+  Comment,
+  Media,
+  Settings
+} = require("./models");
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024
+  },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      return cb(new Error("Only image files are allowed."));
+    }
+
+    cb(null, true);
+  }
+});
+
 r.post("/auth/login", async (q, s, n) => {
   try {
     const identifier = q.body.email?.trim();
@@ -74,8 +105,77 @@ r.post("/comments",async(q,s,n)=>{try{const c=await Comment.create(q.body);s.sta
 r.get("/comments/admin/all",protect,authorOnly,async(q,s,n)=>{try{s.json(await Comment.find().populate("article","headline").sort({createdAt:-1}))}catch(e){n(e)}});
 r.patch("/comments/:id/status",protect,authorOnly,async(q,s,n)=>{try{s.json(await Comment.findByIdAndUpdate(q.params.id,{status:q.body.status},{new:true}))}catch(e){n(e)}});
 r.delete("/comments/:id",protect,authorOnly,async(q,s,n)=>{try{await Comment.findByIdAndDelete(q.params.id);s.json({ok:true})}catch(e){n(e)}});
-r.get("/media",protect,authorOnly,async(q,s,n)=>{try{s.json(await Media.find().sort({createdAt:-1}))}catch(e){n(e)}});
-r.post("/media/external",protect,authorOnly,async(q,s,n)=>{try{s.status(201).json(await Media.create(q.body))}catch(e){n(e)}});
+r.get("/media", protect, authorOnly, async (q, s, n) => {
+  try {
+    s.json(
+      await Media.find().sort({ createdAt: -1 })
+    );
+  } catch (e) {
+    n(e);
+  }
+});
+
+
+r.post(
+  "/media/upload",
+  protect,
+  authorOnly,
+  upload.single("file"),
+  async (q, s, n) => {
+    try {
+      if (!q.file) {
+        return s.status(400).json({
+          message: "No image file was provided."
+        });
+      }
+
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "dhoorth/media",
+            resource_type: "image"
+          },
+          (error, result) => {
+            if (error) {
+              reject(error);
+              return;
+            }
+
+            resolve(result);
+          }
+        );
+
+        stream.end(q.file.buffer);
+      });
+
+      const media = await Media.create({
+        type: "image",
+        url: result.secure_url,
+        publicId: result.public_id,
+        title: q.body.title || "",
+        alt: q.body.alt || "",
+        caption: q.body.caption || "",
+        credit: q.body.credit || "",
+        mimeType: q.file.mimetype
+      });
+
+      s.status(201).json(media);
+    } catch (e) {
+      n(e);
+    }
+  }
+);
+
+
+r.post("/media/external", protect, authorOnly, async (q, s, n) => {
+  try {
+    s.status(201).json(
+      await Media.create(q.body)
+    );
+  } catch (e) {
+    n(e);
+  }
+});
 r.get("/settings",async(q,s,n)=>{try{const a=await Settings.find();s.json(Object.fromEntries(a.map(x=>[x.key,x.value])))}catch(e){n(e)}});
 r.put("/settings/:key",protect,authorOnly,async(q,s,n)=>{try{s.json(await Settings.findOneAndUpdate({key:q.params.key},{value:q.body.value},{upsert:true,new:true}))}catch(e){n(e)}});
 r.get("/stats",protect,authorOnly,async(q,s,n)=>{try{const[a,b,c,d,v,p,k,recent]=await Promise.all([Article.countDocuments(),Article.countDocuments({status:"published"}),Article.countDocuments({status:"draft"}),Article.countDocuments({status:"scheduled"}),Article.aggregate([{$group:{_id:null,n:{$sum:"$views"}}}]),Comment.countDocuments({status:"pending"}),Category.countDocuments(),Article.find().sort({updatedAt:-1}).limit(6).select("headline status views updatedAt")]);s.json({total:a,published:b,drafts:c,scheduled:d,views:v[0]?.n||0,pendingComments:p,categories:k,recent})}catch(e){n(e)}});

@@ -14,7 +14,6 @@ async function protect(req, res, next) {
 
     const d = jwt.verify(t, process.env.JWT_SECRET);
 
-    // Admin login uses the Render environment credentials.
     if (d.id === "admin") {
       req.user = {
         id: "admin",
