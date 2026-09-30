@@ -140,28 +140,44 @@ export function Header() {
     alignItems: "center",
   }}
 >
-  {cats.slice(0, 5).map((c) => (
-    <Button
-      component={Link}
-      to={"/category/" + c.slug}
-      key={c._id}
-    >
-      {c.name}
-    </Button>
-  ))}
-
+  {/* Articles */}
   <Button
-  component={Link}
-  to="/articles"
-  sx={{
-    position: "relative",
-    top: "-18px",
-    left: "-30px",
-  }}
+    component={Link}
+    to="/articles"
+    sx={{
+      minWidth: 0,
+      p: 0,
+      ml: 0,
+      alignSelf: "flex-start",
+    }}
   >
     Articles
   </Button>
-</Stack>   
+
+  {/* Categories */}
+  <Stack
+    direction="row"
+    sx={{
+      alignItems: "center",
+      ml: 7,
+      gap: 1,
+    }}
+  >
+    {cats.slice(0, 5).map((c) => (
+      <Button
+        component={Link}
+        to={"/category/" + c.slug}
+        key={c._id}
+        sx={{
+          minWidth: 0,
+          p: 0,
+        }}
+      >
+        {c.name}
+      </Button>
+    ))}
+  </Stack>
+</Stack> 
 
 
           {/* Header Actions */}
@@ -325,7 +341,7 @@ export function Footer() {
             fontWeight: 800,
           }}
         >
-          PUBLICATION_NAME
+          DHOORTH PUBLICATION HOUSE
         </Typography>
 
         <Typography
@@ -334,6 +350,7 @@ export function Footer() {
             mt: 1,
           }}
         >
+          For the Curious. For the Discerning.
           Independent journalism, analysis, research and long-form stories.
         </Typography>
 
