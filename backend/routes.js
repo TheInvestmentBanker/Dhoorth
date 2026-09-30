@@ -419,14 +419,20 @@ r.get(
   authorOnly,
   async (q, s, n) => {
     try {
-      s.json(
+      const article =
         await Article.findById(
           q.params.id
-        )
-          .populate(
-            "categories subcategories relatedArticles"
-          )
-      );
+        ).populate(
+          "categories subcategories"
+        );
+
+      if (!article) {
+        return s.status(404).json({
+          message: "Article not found"
+        });
+      }
+
+      s.json(article);
 
     } catch (e) {
       n(e);
