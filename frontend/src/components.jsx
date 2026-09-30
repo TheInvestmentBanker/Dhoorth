@@ -34,7 +34,7 @@ import api from "./api";
 import { useAuth, useThemeMode } from "./context";
 import DarkLogo from "./assets/Dark.png";
 import LightLogo from "./assets/Light.png";
-
+import "./style.css";
 
 export function Header() {
   const { mode, toggle } = useThemeMode();
@@ -112,11 +112,11 @@ export function Header() {
   />
   <Typography
         sx={{
-        fontFamily: "Poppins,serif",
+        fontFamily: "Manrope, sans-serif",
         fontWeight: 800,
         fontSize: {
-        xs: 18,
-        md: 24,
+        xs: 21,
+        md: 28,
         },
         letterSpacing: "0.01em",
         lineHeight: 1,
@@ -156,7 +156,7 @@ export function Header() {
   sx={{
     position: "relative",
     top: "-18px",
-    left: "-25px",
+    left: "-30px",
   }}
   >
     Articles

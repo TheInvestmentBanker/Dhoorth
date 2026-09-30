@@ -1,18 +1,1507 @@
-import {useEffect,useState} from "react";
+import { useEffect, useState } from "react";
+
 import {
-  Alert,Box,Button,Card,CardContent,FormControl,Grid,
-  InputLabel,MenuItem,Select,Stack,Table,TableBody,
-  TableCell,TableHead,TableRow,TextField,Typography
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography
 } from "@mui/material";
-import {Link,useNavigate,useParams} from "react-router-dom";
+
+import { Link, useNavigate, useParams } from "react-router-dom";
+
 import api from "./api";
-import {useAuth} from "./context";
+import { useAuth } from "./context";
 
 
-export function Guard(){return useAuth().user?<AdminLayout/>:<NavigateLogin/>}function NavigateLogin(){const n=useNavigate();useEffect(()=>n("/login"),[]);return null}
-export function AdminHome(){const[s,setS]=useState(null);useEffect(()=>api.get("/stats").then(r=>setS(r.data)),[]);return <><Stack direction="row" justifyContent="space-between"><Typography variant="h3">Author Dashboard</Typography><Button component={Link} to="/admin/articles/new" variant="contained">+ New Article</Button></Stack><Grid container spacing={2} sx={{mt:2}}>{s&&[["Articles",s.total],["Published",s.published],["Drafts",s.drafts],["Views",s.views],["Pending",s.pendingComments],["Categories",s.categories]].map(([x,v])=><Grid item xs={6} md={2} key={x}><Card><CardContent><Typography color="text.secondary">{x}</Typography><Typography variant="h4">{v}</Typography></CardContent></Card></Grid>)}</Grid></>}
-export function ManageArticles(){const[a,setA]=useState([]),load=()=>api.get("/articles/admin/all").then(r=>setA(r.data));useEffect(load,[]);return <><Typography variant="h3">Articles Manager</Typography><Button component={Link} to="/admin/articles/new" variant="contained" sx={{my:2}}>+ New Article</Button><Table size="small"><TableHead><TableRow><TableCell>Headline</TableCell><TableCell>Status</TableCell><TableCell>Views</TableCell><TableCell/></TableRow></TableHead><TableBody>{a.map(x=><TableRow key={x._id}><TableCell>{x.headline}</TableCell><TableCell>{x.status}</TableCell><TableCell>{x.views}</TableCell><TableCell><Button component={Link} to={"/admin/articles/edit/"+x._id}>Edit</Button></TableCell></TableRow>)}</TableBody></Table></>}
-export function Editor(){const{id}=useParams(),nav=useNavigate(),[d,setD]=useState({headline:"",subtitle:"",summary:"",place:"",articleType:"NEWS",categories:[],subcategories:[],tags:[],content:[{type:"paragraph",text:""}],status:"draft",commentsEnabled:true}),[tax,setTax]=useState({categories:[],subcategories:[]}),[msg,setMsg]=useState("");useEffect(()=>{api.get("/categories").then(r=>setTax(r.data));if(id)api.get("/articles/"+id).then(r=>setD(r.data))},[id]);const set=(k,v)=>setD(x=>({...x,[k]:v}));const block=(i,k,v)=>setD(x=>({...x,content:x.content.map((b,j)=>j===i?{...b,[k]:v}:b)}));const add=t=>setD(x=>({...x,content:[...x.content,{type:t,text:"",heading:"",url:"",title:"",caption:"",items:[""]}]}));const save=async()=>{try{if(!d.categories?.length||!d.subcategories?.length)return setMsg("Select at least one category and one subcategory.");if(id)await api.put("/articles/"+id,d);else await api.post("/articles",d);nav("/admin/articles")}catch(e){setMsg(e.response?.data?.message||"Save failed")}};return <><Typography variant="h3">{id?"Edit Article":"New Article"}</Typography>{msg&&<Alert sx={{my:2}}>{msg}</Alert>}<Grid container spacing={3} sx={{mt:1}}><Grid item xs={12} md={8}><Stack spacing={2}><TextField label="Main Headline" value={d.headline} onChange={e=>set("headline",e.target.value)}/><TextField label="Subtitle" value={d.subtitle||""} onChange={e=>set("subtitle",e.target.value)}/><TextField multiline minRows={3} label="Summary" value={d.summary||""} onChange={e=>set("summary",e.target.value)}/><TextField label="Place" value={d.place||""} onChange={e=>set("place",e.target.value)}/><FormControl><InputLabel>Article Type</InputLabel><Select label="Article Type" value={d.articleType||"NEWS"} onChange={e=>set("articleType",e.target.value)}>{["NEWS","ANALYSIS","OPINION","SPONSORED","INTERVIEW","DEEP DIVE","EXPLAINER"].map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl><Typography variant="h5">Content Blocks</Typography>{(d.content||[]).map((b,i)=><Card key={i} variant="outlined"><CardContent><Typography fontWeight={800}>{i+1}. {b.type}</Typography>{b.type==="heading"?<TextField fullWidth label="Heading" value={b.heading||""} onChange={e=>block(i,"heading",e.target.value)}/>:["paragraph","quote","highlight"].includes(b.type)?<TextField fullWidth multiline minRows={4} label={b.type} value={b.text||""} onChange={e=>block(i,"text",e.target.value)}/>:["image","video","document"].includes(b.type)?<Stack spacing={1}><TextField fullWidth label="Media URL" value={b.url||""} onChange={e=>block(i,"url",e.target.value)}/><TextField fullWidth label="Title / Alt" value={b.title||""} onChange={e=>block(i,"title",e.target.value)}/><TextField fullWidth label="Caption" value={b.caption||""} onChange={e=>block(i,"caption",e.target.value)}/></Stack>:<TextField fullWidth multiline label="Items, one per line" value={(b.items||[]).join("\n")} onChange={e=>block(i,"items",e.target.value.split("\n"))}/>}<Button color="error" onClick={()=>setD(x=>({...x,content:x.content.filter((_,j)=>j!==i)}))}>Remove</Button></CardContent></Card>)}<Stack direction="row" flexWrap="wrap" gap={1}>{["paragraph","heading","image","video","document","quote","list","highlight"].map(x=><Button variant="outlined" key={x} onClick={()=>add(x)}>+ {x}</Button>)}</Stack></Stack></Grid><Grid item xs={12} md={4}><Stack spacing={2}><FormControl><InputLabel>Categories</InputLabel><Select multiple label="Categories" value={d.categories||[]} onChange={e=>set("categories",e.target.value)}>{tax.categories.map(x=><MenuItem key={x._id} value={x._id}>{x.name}</MenuItem>)}</Select></FormControl><FormControl><InputLabel>Subcategories</InputLabel><Select multiple label="Subcategories" value={d.subcategories||[]} onChange={e=>set("subcategories",e.target.value)}>{tax.subcategories.map(x=><MenuItem key={x._id} value={x._id}>{x.name}</MenuItem>)}</Select></FormControl><TextField label="Tags, comma separated" value={(d.tags||[]).join(",")} onChange={e=>set("tags",e.target.value.split(",").map(x=>x.trim()).filter(Boolean))}/><TextField select SelectProps={{native:true}} label="Status" value={d.status||"draft"} onChange={e=>set("status",e.target.value)}><option value="draft">Draft</option><option value="published">Published</option><option value="scheduled">Scheduled</option><option value="archived">Archived</option></TextField><Button variant="contained" onClick={save}>{id?"Update":"Save"}</Button></Stack></Grid></Grid></>}
-export function Categories(){const[d,setD]=useState({categories:[],subcategories:[]}),[n,setN]=useState(""),[s,setS]=useState(""),[p,setP]=useState("");const load=()=>api.get("/categories/admin/all").then(r=>setD(r.data));useEffect(load,[]);return <><Typography variant="h3">Categories</Typography><Stack spacing={2} sx={{my:3,maxWidth:700}}><TextField label="New category" value={n} onChange={e=>setN(e.target.value)}/><Button variant="contained" onClick={async()=>{await api.post("/categories",{name:n});setN("");load()}}>Add Category</Button><TextField select SelectProps={{native:true}} value={p} onChange={e=>setP(e.target.value)}><option value="">Parent category</option>{d.categories.map(x=><option key={x._id} value={x._id}>{x.name}</option>)}</TextField><TextField label="New subcategory" value={s} onChange={e=>setS(e.target.value)}/><Button variant="outlined" onClick={async()=>{await api.post("/categories/subcategories",{name:s,category:p});setS("");load()}}>Add Subcategory</Button></Stack>{d.categories.map(c=><Typography key={c._id}><b>{c.name}</b> — {d.subcategories.filter(x=>x.category?._id===c._id).map(x=>x.name).join(", ")}</Typography>)}</>}
-export function Comments(){const[a,setA]=useState([]),load=()=>api.get("/comments/admin/all").then(r=>setA(r.data));useEffect(load,[]);return <><Typography variant="h3">Comments</Typography>{a.map(x=><Card key={x._id} sx={{my:2}}><CardContent><b>{x.name}</b><Typography>{x.content}</Typography><Stack direction="row">{["approved","rejected","spam"].map(s=><Button key={s} onClick={async()=>{await api.patch("/comments/"+x._id+"/status",{status:s});load()}}>{s}</Button>)}<Button color="error" onClick={async()=>{await api.delete("/comments/"+x._id);load()}}>Delete</Button></Stack></CardContent></Card>)}</>}
-export function Settings(){const[v,setV]=useState({siteName:"PUBLICATION_NAME",description:"",commentsEnabled:true,adsEnabled:true});return <><Typography variant="h3">Site Settings</Typography><Stack spacing={2} sx={{mt:3,maxWidth:700}}><TextField label="Publication name" value={v.siteName} onChange={e=>setV({...v,siteName:e.target.value})}/><TextField multiline minRows={3} label="Description" value={v.description} onChange={e=>setV({...v,description:e.target.value})}/><Button variant="contained" onClick={async()=>await api.put("/settings/site",{value:v})}>Save</Button></Stack></>}
+export function Guard() {
+  return useAuth().user ? <AdminLayout /> : <NavigateLogin />;
+}
+
+
+function NavigateLogin() {
+  const n = useNavigate();
+
+  useEffect(() => {
+    n("/login");
+  }, [n]);
+
+  return null;
+}
+
+
+/* =========================================================
+   ADMIN HOME
+========================================================= */
+
+export function AdminHome() {
+  const [s, setS] = useState(null);
+
+  useEffect(() => {
+    api.get("/stats").then((r) => setS(r.data));
+  }, []);
+
+  return (
+    <>
+      <Stack direction="row" justifyContent="space-between">
+        <Typography variant="h3">
+          Author Dashboard
+        </Typography>
+
+        <Button
+          component={Link}
+          to="/admin/articles/new"
+          variant="contained"
+        >
+          + New Article
+        </Button>
+      </Stack>
+
+      <Grid container spacing={2} sx={{ mt: 2 }}>
+        {s &&
+          [
+            ["Articles", s.total],
+            ["Published", s.published],
+            ["Drafts", s.drafts],
+            ["Views", s.views],
+            ["Pending", s.pendingComments],
+            ["Categories", s.categories]
+          ].map(([x, v]) => (
+            <Grid item xs={6} md={2} key={x}>
+              <Card>
+                <CardContent>
+                  <Typography color="text.secondary">
+                    {x}
+                  </Typography>
+
+                  <Typography variant="h4">
+                    {v}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+      </Grid>
+    </>
+  );
+}
+
+
+/* =========================================================
+   ARTICLES MANAGER
+========================================================= */
+
+export function ManageArticles() {
+  const [a, setA] = useState([]);
+
+  const load = () =>
+    api
+      .get("/articles/admin/all")
+      .then((r) => setA(r.data));
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  return (
+    <>
+      <Typography variant="h3">
+        Articles Manager
+      </Typography>
+
+      <Button
+        component={Link}
+        to="/admin/articles/new"
+        variant="contained"
+        sx={{ my: 2 }}
+      >
+        + New Article
+      </Button>
+
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>Headline</TableCell>
+            <TableCell>Status</TableCell>
+            <TableCell>Views</TableCell>
+            <TableCell />
+          </TableRow>
+        </TableHead>
+
+        <TableBody>
+          {a.map((x) => (
+            <TableRow key={x._id}>
+              <TableCell>{x.headline}</TableCell>
+              <TableCell>{x.status}</TableCell>
+              <TableCell>{x.views}</TableCell>
+
+              <TableCell>
+                <Button
+                  component={Link}
+                  to={"/admin/articles/edit/" + x._id}
+                >
+                  Edit
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </>
+  );
+}
+
+
+/* =========================================================
+   MEDIA LIBRARY
+========================================================= */
+
+export function MediaLibrary() {
+  const [media, setMedia] = useState([]);
+
+  const [file, setFile] = useState(null);
+
+  const [title, setTitle] = useState("");
+  const [alt, setAlt] = useState("");
+  const [caption, setCaption] = useState("");
+  const [credit, setCredit] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [loadingMedia, setLoadingMedia] = useState(true);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+
+  const loadMedia = async () => {
+    try {
+      setLoadingMedia(true);
+
+      const { data } = await api.get("/media");
+
+      setMedia(data);
+    } catch (e) {
+      setError(
+        e.response?.data?.message ||
+        "Failed to load media library."
+      );
+    } finally {
+      setLoadingMedia(false);
+    }
+  };
+
+
+  useEffect(() => {
+    loadMedia();
+  }, []);
+
+
+  const upload = async () => {
+    if (!file) {
+      setError("Please select an image first.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setMessage("");
+      setError("");
+
+      const formData = new FormData();
+
+      formData.append("file", file);
+      formData.append("title", title);
+      formData.append("alt", alt);
+      formData.append("caption", caption);
+      formData.append("credit", credit);
+
+      await api.post(
+        "/media/upload",
+        formData
+      );
+
+      setMessage("Image uploaded successfully.");
+
+      setFile(null);
+      setTitle("");
+      setAlt("");
+      setCaption("");
+      setCredit("");
+
+      const input =
+        document.getElementById("media-file-input");
+
+      if (input) {
+        input.value = "";
+      }
+
+      await loadMedia();
+
+    } catch (e) {
+      setError(
+        e.response?.data?.message ||
+        "Image upload failed."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  return (
+    <>
+      <Typography variant="h3">
+        Media Library
+      </Typography>
+
+      <Typography
+        color="text.secondary"
+        sx={{ mt: 1, mb: 3 }}
+      >
+        Upload and manage images for Dhoorth articles.
+      </Typography>
+
+
+      {message && (
+        <Alert
+          severity="success"
+          sx={{ mb: 2 }}
+        >
+          {message}
+        </Alert>
+      )}
+
+
+      {error && (
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+        >
+          {error}
+        </Alert>
+      )}
+
+
+      <Card
+        variant="outlined"
+        sx={{ mb: 4 }}
+      >
+        <CardContent>
+          <Typography variant="h5" sx={{ mb: 2 }}>
+            Upload Image
+          </Typography>
+
+          <Stack spacing={2}>
+
+            <Button
+              variant="outlined"
+              component="label"
+            >
+              {file
+                ? file.name
+                : "Choose Image"}
+
+              <input
+                id="media-file-input"
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={(e) => {
+                  setFile(
+                    e.target.files?.[0] || null
+                  );
+
+                  setMessage("");
+                  setError("");
+                }}
+              />
+            </Button>
+
+
+            {file && (
+              <Box
+                sx={{
+                  maxWidth: 400,
+                  borderRadius: 1,
+                  overflow: "hidden"
+                }}
+              >
+                <Box
+                  component="img"
+                  src={URL.createObjectURL(file)}
+                  alt="Selected preview"
+                  sx={{
+                    display: "block",
+                    width: "100%",
+                    maxHeight: 300,
+                    objectFit: "cover"
+                  }}
+                />
+              </Box>
+            )}
+
+
+            <TextField
+              label="Title"
+              value={title}
+              onChange={(e) =>
+                setTitle(e.target.value)
+              }
+              fullWidth
+            />
+
+
+            <TextField
+              label="Alt Text"
+              value={alt}
+              onChange={(e) =>
+                setAlt(e.target.value)
+              }
+              fullWidth
+              helperText="Describe the image for accessibility."
+            />
+
+
+            <TextField
+              label="Caption"
+              value={caption}
+              onChange={(e) =>
+                setCaption(e.target.value)
+              }
+              fullWidth
+            />
+
+
+            <TextField
+              label="Credit"
+              value={credit}
+              onChange={(e) =>
+                setCredit(e.target.value)
+              }
+              fullWidth
+            />
+
+
+            <Box>
+              <Button
+                variant="contained"
+                onClick={upload}
+                disabled={loading || !file}
+              >
+                {loading
+                  ? "Uploading..."
+                  : "Upload to Media Library"}
+              </Button>
+            </Box>
+
+          </Stack>
+        </CardContent>
+      </Card>
+
+
+      <Typography variant="h5" sx={{ mb: 2 }}>
+        Media Pool
+      </Typography>
+
+
+      {loadingMedia ? (
+        <Typography color="text.secondary">
+          Loading media...
+        </Typography>
+      ) : media.length === 0 ? (
+        <Typography color="text.secondary">
+          No media uploaded yet.
+        </Typography>
+      ) : (
+        <Grid container spacing={2}>
+          {media.map((item) => (
+            <Grid
+              item
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
+              key={item._id}
+            >
+              <Card
+                variant="outlined"
+                sx={{ height: "100%" }}
+              >
+                <Box
+                  component="img"
+                  src={item.url}
+                  alt={item.alt || item.title || ""}
+                  sx={{
+                    display: "block",
+                    width: "100%",
+                    height: 200,
+                    objectFit: "cover"
+                  }}
+                />
+
+                <CardContent>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={700}
+                  >
+                    {item.title || "Untitled image"}
+                  </Typography>
+
+                  {item.caption && (
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mt: 0.5 }}
+                    >
+                      {item.caption}
+                    </Typography>
+                  )}
+
+                  {item.credit && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{
+                        display: "block",
+                        mt: 1
+                      }}
+                    >
+                      Credit: {item.credit}
+                    </Typography>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+    </>
+  );
+}
+
+
+/* =========================================================
+   ARTICLE EDITOR
+========================================================= */
+
+export function Editor() {
+  const { id } = useParams();
+  const nav = useNavigate();
+
+  const [d, setD] = useState({
+    headline: "",
+    subtitle: "",
+    summary: "",
+    place: "",
+    articleType: "NEWS",
+    heroImage: {
+      url: "",
+      alt: "",
+      caption: "",
+      credit: ""
+    },
+    categories: [],
+    subcategories: [],
+    tags: [],
+    content: [
+      {
+        type: "paragraph",
+        text: ""
+      }
+    ],
+    status: "draft",
+    commentsEnabled: true
+  });
+  
+  const [tax, setTax] = useState({
+    categories: [],
+    subcategories: []
+  });
+
+  const [msg, setMsg] = useState("");
+  const [media, setMedia] = useState([]);
+  const [heroDialog, setHeroDialog] = useState(false);
+  const [mediaLoading, setMediaLoading] = useState(false);
+  
+  const openHeroDialog = async () => {
+  setHeroDialog(true);
+  setMediaLoading(true);
+
+  try {
+    const r = await api.get("/media");
+    setMedia(r.data);
+  } catch (e) {
+    setMsg(
+      e.response?.data?.message ||
+        "Unable to load the Media Library."
+    );
+  } finally {
+    setMediaLoading(false);
+  }
+};
+
+const chooseHeroImage = (image) => {
+  setD((x) => ({
+    ...x,
+    heroImage: {
+      url: image.url,
+      alt: image.alt || "",
+      caption: image.caption || "",
+      credit: image.credit || ""
+    }
+  }));
+
+  setHeroDialog(false);
+};
+
+useEffect(() => {
+  api
+    .get("/media")
+    .then((r) => setMedia(r.data))
+    .catch(() => {});
+}, []);
+
+  useEffect(() => {
+    api
+      .get("/categories")
+      .then((r) => setTax(r.data));
+
+    if (id) {
+      api
+        .get("/articles/" + id)
+        .then((r) => setD(r.data));
+    }
+  }, [id]);
+
+
+  const set = (k, v) => {
+    setD((x) => ({
+      ...x,
+      [k]: v
+    }));
+  };
+
+
+  const block = (i, k, v) => {
+    setD((x) => ({
+      ...x,
+      content: x.content.map((b, j) =>
+        j === i
+          ? {
+              ...b,
+              [k]: v
+            }
+          : b
+      )
+    }));
+  };
+
+
+  const add = (t) => {
+    setD((x) => ({
+      ...x,
+      content: [
+        ...x.content,
+        {
+          type: t,
+          text: "",
+          heading: "",
+          url: "",
+          title: "",
+          caption: "",
+          items: [""]
+        }
+      ]
+    }));
+  };
+
+
+  const save = async () => {
+    try {
+      if (
+        !d.categories?.length ||
+        !d.subcategories?.length
+      ) {
+        return setMsg(
+          "Select at least one category and one subcategory."
+        );
+      }
+
+      if (id) {
+        await api.put(
+          "/articles/" + id,
+          d
+        );
+      } else {
+        await api.post(
+          "/articles",
+          d
+        );
+      }
+
+      nav("/admin/articles");
+
+    } catch (e) {
+      setMsg(
+        e.response?.data?.message ||
+        "Save failed"
+      );
+    }
+  };
+
+
+  return (
+    <>
+      <Typography variant="h3">
+        {id ? "Edit Article" : "New Article"}
+      </Typography>
+
+      {msg && (
+        <Alert sx={{ my: 2 }}>
+          {msg}
+        </Alert>
+      )}
+
+      <Grid container spacing={3} sx={{ mt: 1 }}>
+
+        <Grid item xs={12} md={8}>
+          <Stack spacing={2}>
+
+            <TextField
+              label="Main Headline"
+              value={d.headline}
+              onChange={(e) =>
+                set(
+                  "headline",
+                  e.target.value
+                )
+              }
+            />
+
+
+            <TextField
+              label="Subtitle"
+              value={d.subtitle || ""}
+              onChange={(e) =>
+                set(
+                  "subtitle",
+                  e.target.value
+                )
+              }
+            />
+
+
+            <TextField
+              multiline
+              minRows={3}
+              label="Summary"
+              value={d.summary || ""}
+              onChange={(e) =>
+                set(
+                  "summary",
+                  e.target.value
+                )
+              }
+            />
+
+
+            <TextField
+              label="Place"
+              value={d.place || ""}
+              onChange={(e) =>
+                set(
+                  "place",
+                  e.target.value
+                )
+              }
+            />
+
+
+            <FormControl>
+              <InputLabel>
+                Article Type
+              </InputLabel>
+
+              <Select
+                label="Article Type"
+                value={
+                  d.articleType || "NEWS"
+                }
+                onChange={(e) =>
+                  set(
+                    "articleType",
+                    e.target.value
+                  )
+                }
+              >
+                {[
+                  "NEWS",
+                  "ANALYSIS",
+                  "OPINION",
+                  "SPONSORED",
+                  "INTERVIEW",
+                  "DEEP DIVE",
+                  "EXPLAINER"
+                ].map((x) => (
+                  <MenuItem
+                    key={x}
+                    value={x}
+                  >
+                    {x}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Card variant="outlined">
+  <CardContent>
+    <Stack spacing={2}>
+      <Typography variant="h6">
+        Hero Image
+      </Typography>
+
+      {d.heroImage?.url ? (
+        <Box
+          component="img"
+          src={d.heroImage.url}
+          alt={d.heroImage.alt || "Hero image"}
+          sx={{
+            width: "100%",
+            maxHeight: 320,
+            objectFit: "cover",
+            borderRadius: 1
+          }}
+        />
+      ) : (
+        <Box
+          sx={{
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 1,
+            p: 4,
+            textAlign: "center"
+          }}
+        >
+          <Typography color="text.secondary">
+            No hero image selected.
+          </Typography>
+        </Box>
+      )}
+
+      <Button
+        variant="outlined"
+        onClick={openHeroDialog}
+      >
+        {d.heroImage?.url
+          ? "Change Hero Image"
+          : "Choose Hero Image"}
+      </Button>
+
+      {d.heroImage?.caption && (
+        <Typography
+          variant="body2"
+          color="text.secondary"
+        >
+          {d.heroImage.caption}
+        </Typography>
+      )}
+
+      {d.heroImage?.credit && (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+        >
+          Credit: {d.heroImage.credit}
+        </Typography>
+      )}
+    </Stack>
+  </CardContent>
+</Card>
+
+            <Typography variant="h5">
+              Content Blocks
+            </Typography>
+
+
+            {(d.content || []).map((b, i) => (
+              <Card
+                key={i}
+                variant="outlined"
+              >
+                <CardContent>
+
+                  <Typography fontWeight={800}>
+                    {i + 1}. {b.type}
+                  </Typography>
+
+
+                  {b.type === "heading" ? (
+                    <TextField
+                      fullWidth
+                      label="Heading"
+                      value={b.heading || ""}
+                      onChange={(e) =>
+                        block(
+                          i,
+                          "heading",
+                          e.target.value
+                        )
+                      }
+                    />
+
+                  ) : [
+                      "paragraph",
+                      "quote",
+                      "highlight"
+                    ].includes(b.type) ? (
+
+                    <TextField
+                      fullWidth
+                      multiline
+                      minRows={4}
+                      label={b.type}
+                      value={b.text || ""}
+                      onChange={(e) =>
+                        block(
+                          i,
+                          "text",
+                          e.target.value
+                        )
+                      }
+                    />
+
+                  ) : [
+                      "image",
+                      "video",
+                      "document"
+                    ].includes(b.type) ? (
+
+                    <Stack spacing={1}>
+
+                      <TextField
+                        fullWidth
+                        label="Media URL"
+                        value={b.url || ""}
+                        onChange={(e) =>
+                          block(
+                            i,
+                            "url",
+                            e.target.value
+                          )
+                        }
+                      />
+
+                      <TextField
+                        fullWidth
+                        label="Title / Alt"
+                        value={b.title || ""}
+                        onChange={(e) =>
+                          block(
+                            i,
+                            "title",
+                            e.target.value
+                          )
+                        }
+                      />
+
+                      <TextField
+                        fullWidth
+                        label="Caption"
+                        value={b.caption || ""}
+                        onChange={(e) =>
+                          block(
+                            i,
+                            "caption",
+                            e.target.value
+                          )
+                        }
+                      />
+
+                    </Stack>
+
+                  ) : (
+
+                    <TextField
+                      fullWidth
+                      multiline
+                      label="Items, one per line"
+                      value={(b.items || []).join(
+                        "\n"
+                      )}
+                      onChange={(e) =>
+                        block(
+                          i,
+                          "items",
+                          e.target.value.split("\n")
+                        )
+                      }
+                    />
+
+                  )}
+
+
+                  <Button
+                    color="error"
+                    onClick={() =>
+                      setD((x) => ({
+                        ...x,
+                        content:
+                          x.content.filter(
+                            (_, j) => j !== i
+                          )
+                      }))
+                    }
+                  >
+                    Remove
+                  </Button>
+
+                </CardContent>
+              </Card>
+            ))}
+
+
+            <Stack
+              direction="row"
+              flexWrap="wrap"
+              gap={1}
+            >
+              {[
+                "paragraph",
+                "heading",
+                "image",
+                "video",
+                "document",
+                "quote",
+                "list",
+                "highlight"
+              ].map((x) => (
+                <Button
+                  variant="outlined"
+                  key={x}
+                  onClick={() => add(x)}
+                >
+                  + {x}
+                </Button>
+              ))}
+            </Stack>
+
+          </Stack>
+        </Grid>
+
+
+        <Grid item xs={12} md={4}>
+          <Stack spacing={2}>
+
+            <FormControl>
+              <InputLabel>
+                Categories
+              </InputLabel>
+
+              <Select
+                multiple
+                label="Categories"
+                value={d.categories || []}
+                onChange={(e) =>
+                  set(
+                    "categories",
+                    e.target.value
+                  )
+                }
+              >
+                {tax.categories.map((x) => (
+                  <MenuItem
+                    key={x._id}
+                    value={x._id}
+                  >
+                    {x.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+
+            <FormControl>
+              <InputLabel>
+                Subcategories
+              </InputLabel>
+
+              <Select
+                multiple
+                label="Subcategories"
+                value={
+                  d.subcategories || []
+                }
+                onChange={(e) =>
+                  set(
+                    "subcategories",
+                    e.target.value
+                  )
+                }
+              >
+                {tax.subcategories.map((x) => (
+                  <MenuItem
+                    key={x._id}
+                    value={x._id}
+                  >
+                    {x.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+
+            <TextField
+              label="Tags, comma separated"
+              value={(d.tags || []).join(",")}
+              onChange={(e) =>
+                set(
+                  "tags",
+                  e.target.value
+                    .split(",")
+                    .map((x) => x.trim())
+                    .filter(Boolean)
+                )
+              }
+            />
+
+
+            <TextField
+              select
+              SelectProps={{
+                native: true
+              }}
+              label="Status"
+              value={d.status || "draft"}
+              onChange={(e) =>
+                set(
+                  "status",
+                  e.target.value
+                )
+              }
+            >
+              <option value="draft">
+                Draft
+              </option>
+
+              <option value="published">
+                Published
+              </option>
+
+              <option value="scheduled">
+                Scheduled
+              </option>
+
+              <option value="archived">
+                Archived
+              </option>
+            </TextField>
+
+
+            <Button
+              variant="contained"
+              onClick={save}
+            >
+              {id ? "Update" : "Save"}
+            </Button>
+
+          </Stack>
+        </Grid>
+
+      </Grid>
+      <Dialog
+  open={heroDialog}
+  onClose={() => setHeroDialog(false)}
+  fullWidth
+  maxWidth="lg"
+>
+  <DialogTitle>
+    Choose Hero Image
+  </DialogTitle>
+
+  <DialogContent dividers>
+    {mediaLoading ? (
+      <Typography>
+        Loading Media Library...
+      </Typography>
+    ) : media.length === 0 ? (
+      <Typography color="text.secondary">
+        No images are available in the Media Library.
+      </Typography>
+    ) : (
+      <Grid container spacing={2}>
+        {media.map((image) => (
+          <Grid
+            item
+            xs={12}
+            sm={6}
+            md={4}
+            key={image._id}
+          >
+            <Card
+              variant="outlined"
+              sx={{
+                cursor: "pointer",
+                overflow: "hidden",
+                "&:hover": {
+                  borderColor: "primary.main"
+                }
+              }}
+              onClick={() =>
+                chooseHeroImage(image)
+              }
+            >
+              <Box
+                component="img"
+                src={image.url}
+                alt={image.alt || image.title || ""}
+                sx={{
+                  width: "100%",
+                  height: 180,
+                  objectFit: "cover",
+                  display: "block"
+                }}
+              />
+
+              <CardContent>
+                <Typography
+                  fontWeight={700}
+                  noWrap
+                >
+                  {image.title || "Untitled image"}
+                </Typography>
+
+                {image.credit && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                  >
+                    {image.credit}
+                  </Typography>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    )}
+  </DialogContent>
+
+  <DialogActions>
+    <Button
+      onClick={() => setHeroDialog(false)}
+    >
+      Cancel
+    </Button>
+  </DialogActions>
+</Dialog>
+    </>
+  );
+}
+
+
+/* =========================================================
+   CATEGORIES
+========================================================= */
+
+export function Categories() {
+  const [d, setD] = useState({
+    categories: [],
+    subcategories: []
+  });
+
+  const [n, setN] = useState("");
+  const [s, setS] = useState("");
+  const [p, setP] = useState("");
+
+
+  const load = () =>
+    api
+      .get("/categories/admin/all")
+      .then((r) => setD(r.data));
+
+
+  useEffect(() => {
+    load();
+  }, []);
+
+
+  return (
+    <>
+      <Typography variant="h3">
+        Categories
+      </Typography>
+
+      <Stack
+        spacing={2}
+        sx={{
+          my: 3,
+          maxWidth: 700
+        }}
+      >
+
+        <TextField
+          label="New category"
+          value={n}
+          onChange={(e) =>
+            setN(e.target.value)
+          }
+        />
+
+        <Button
+          variant="contained"
+          onClick={async () => {
+            await api.post(
+              "/categories",
+              {
+                name: n
+              }
+            );
+
+            setN("");
+            load();
+          }}
+        >
+          Add Category
+        </Button>
+
+
+        <TextField
+          select
+          SelectProps={{
+            native: true
+          }}
+          value={p}
+          onChange={(e) =>
+            setP(e.target.value)
+          }
+        >
+          <option value="">
+            Parent category
+          </option>
+
+          {d.categories.map((x) => (
+            <option
+              key={x._id}
+              value={x._id}
+            >
+              {x.name}
+            </option>
+          ))}
+        </TextField>
+
+
+        <TextField
+          label="New subcategory"
+          value={s}
+          onChange={(e) =>
+            setS(e.target.value)
+          }
+        />
+
+        <Button
+          variant="outlined"
+          onClick={async () => {
+            await api.post(
+              "/categories/subcategories",
+              {
+                name: s,
+                category: p
+              }
+            );
+
+            setS("");
+            load();
+          }}
+        >
+          Add Subcategory
+        </Button>
+
+      </Stack>
+
+
+      {d.categories.map((c) => (
+        <Typography key={c._id}>
+          <b>{c.name}</b> —{" "}
+          {d.subcategories
+            .filter(
+              (x) =>
+                x.category?._id === c._id
+            )
+            .map((x) => x.name)
+            .join(", ")}
+        </Typography>
+      ))}
+    </>
+  );
+}
+
+
+/* =========================================================
+   COMMENTS
+========================================================= */
+
+export function Comments() {
+  const [a, setA] = useState([]);
+
+
+  const load = () =>
+    api
+      .get("/comments/admin/all")
+      .then((r) => setA(r.data));
+
+
+  useEffect(() => {
+    load();
+  }, []);
+
+
+  return (
+    <>
+      <Typography variant="h3">
+        Comments
+      </Typography>
+
+      {a.map((x) => (
+        <Card
+          key={x._id}
+          sx={{ my: 2 }}
+        >
+          <CardContent>
+            <b>{x.name}</b>
+
+            <Typography>
+              {x.content}
+            </Typography>
+
+            <Stack direction="row">
+              {[
+                "approved",
+                "rejected",
+                "spam"
+              ].map((s) => (
+                <Button
+                  key={s}
+                  onClick={async () => {
+                    await api.patch(
+                      "/comments/" +
+                        x._id +
+                        "/status",
+                      {
+                        status: s
+                      }
+                    );
+
+                    load();
+                  }}
+                >
+                  {s}
+                </Button>
+              ))}
+
+              <Button
+                color="error"
+                onClick={async () => {
+                  await api.delete(
+                    "/comments/" + x._id
+                  );
+
+                  load();
+                }}
+              >
+                Delete
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
+      ))}
+    </>
+  );
+}
+
+
+/* =========================================================
+   SETTINGS
+========================================================= */
+
+export function Settings() {
+  const [v, setV] = useState({
+    siteName: "PUBLICATION_NAME",
+    description: "",
+    commentsEnabled: true,
+    adsEnabled: true
+  });
+
+
+  return (
+    <>
+      <Typography variant="h3">
+        Site Settings
+      </Typography>
+
+      <Stack
+        spacing={2}
+        sx={{
+          mt: 3,
+          maxWidth: 700
+        }}
+      >
+
+        <TextField
+          label="Publication name"
+          value={v.siteName}
+          onChange={(e) =>
+            setV({
+              ...v,
+              siteName: e.target.value
+            })
+          }
+        />
+
+
+        <TextField
+          multiline
+          minRows={3}
+          label="Description"
+          value={v.description}
+          onChange={(e) =>
+            setV({
+              ...v,
+              description: e.target.value
+            })
+          }
+        />
+
+
+        <Button
+          variant="contained"
+          onClick={async () =>
+            await api.put(
+              "/settings/site",
+              {
+                value: v
+              }
+            )
+          }
+        >
+          Save
+        </Button>
+
+      </Stack>
+    </>
+  );
+}

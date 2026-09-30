@@ -1,4 +1,5 @@
 import { Routes, Route, Outlet, Navigate } from "react-router-dom";
+
 import { Header, Footer, EdgeBall } from "./components";
 
 import {
@@ -14,35 +15,48 @@ import {
   AdminHome,
   ManageArticles,
   Editor,
+  MediaLibrary,
   Categories,
   Comments,
   Settings
 } from "./admin";
 
 import { useAuth } from "./context";
+
 import { Box, Button } from "@mui/material";
+
 
 function Guard() {
   const { user } = useAuth();
 
-  return user ? <AdminShell /> : <Navigate to="/login" replace />;
+  return user ? <Outlet /> : <Navigate to="/login" replace />;
 }
+
 
 function AdminShell() {
   const navs = [
     ["Dashboard", "/admin"],
     ["Articles", "/admin/articles"],
     ["New Article", "/admin/articles/new"],
+    ["Media Library", "/admin/media"],
     ["Categories", "/admin/categories"],
     ["Comments", "/admin/comments"],
     ["Settings", "/admin/settings"]
   ];
 
   return (
-    <Box sx={{ display: "flex", minHeight: "70vh" }}>
+    <Box
+      sx={{
+        display: "flex",
+        minHeight: "70vh"
+      }}
+    >
       <Box
         sx={{
-          width: { xs: 160, md: 230 },
+          width: {
+            xs: 160,
+            md: 230
+          },
           borderRight: 1,
           borderColor: "divider",
           p: 1
@@ -52,7 +66,9 @@ function AdminShell() {
           <Button
             key={to}
             fullWidth
-            sx={{ justifyContent: "flex-start" }}
+            sx={{
+              justifyContent: "flex-start"
+            }}
             onClick={() => {
               window.location.href = to;
             }}
@@ -65,7 +81,10 @@ function AdminShell() {
       <Box
         sx={{
           flex: 1,
-          p: { xs: 2, md: 4 },
+          p: {
+            xs: 2,
+            md: 4
+          },
           minWidth: 0
         }}
       >
@@ -75,28 +94,60 @@ function AdminShell() {
   );
 }
 
+
 export default function App() {
   return (
     <>
       <Header />
 
       <Routes>
-        {/* PUBLIC ROUTES */}
-        <Route path="/" element={<Home />} />
-        <Route path="/articles" element={<Articles />} />
-        <Route path="/article/:slug" element={<Article />} />
-        <Route path="/category/:slug" element={<Category />} />
-        <Route path="/subcategory/:slug" element={<Articles />} />
-        <Route path="/search" element={<Articles />} />
 
-        <Route path="/login" element={<Login />} />
+        {/* =================================================
+            PUBLIC ROUTES
+        ================================================= */}
+
+        <Route
+          path="/"
+          element={<Home />}
+        />
+
+        <Route
+          path="/articles"
+          element={<Articles />}
+        />
+
+        <Route
+          path="/article/:slug"
+          element={<Article />}
+        />
+
+        <Route
+          path="/category/:slug"
+          element={<Category />}
+        />
+
+        <Route
+          path="/subcategory/:slug"
+          element={<Articles />}
+        />
+
+        <Route
+          path="/search"
+          element={<Articles />}
+        />
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
 
         <Route
           path="/about"
           element={
             <Info title="About">
-              PUBLICATION_NAME is an independent publication for reporting,
-              analysis and research.
+              PUBLICATION_NAME is an independent publication for
+              reporting, analysis and research.
             </Info>
           }
         />
@@ -114,8 +165,8 @@ export default function App() {
           path="/privacy"
           element={
             <Info title="Privacy Policy">
-              Replace this placeholder with the final privacy policy before
-              launch.
+              Replace this placeholder with the final privacy policy
+              before launch.
             </Info>
           }
         />
@@ -124,7 +175,8 @@ export default function App() {
           path="/terms"
           element={
             <Info title="Terms & Conditions">
-              Replace this placeholder with the final terms before launch.
+              Replace this placeholder with the final terms before
+              launch.
             </Info>
           }
         />
@@ -133,24 +185,66 @@ export default function App() {
           path="/editorial-policy"
           element={
             <Info title="Editorial Policy">
-              Define your standards for sourcing, corrections, sponsored
-              material and opinion.
+              Define your standards for sourcing, corrections,
+              sponsored material and opinion.
             </Info>
           }
         />
 
-        {/* ADMIN ROUTES */}
-        <Route path="/admin" element={<Guard />}>
+
+        {/* =================================================
+            ADMIN ROUTES
+        ================================================= */}
+
+        <Route
+          path="/admin"
+          element={<Guard />}
+        >
           <Route element={<AdminShell />}>
-            <Route index element={<AdminHome />} />
-            <Route path="articles" element={<ManageArticles />} />
-            <Route path="articles/new" element={<Editor />} />
-            <Route path="articles/edit/:id" element={<Editor />} />
-            <Route path="categories" element={<Categories />} />
-            <Route path="comments" element={<Comments />} />
-            <Route path="settings" element={<Settings />} />
+
+            <Route
+              index
+              element={<AdminHome />}
+            />
+
+            <Route
+              path="articles"
+              element={<ManageArticles />}
+            />
+
+            <Route
+              path="articles/new"
+              element={<Editor />}
+            />
+
+            <Route
+              path="articles/edit/:id"
+              element={<Editor />}
+            />
+
+            <Route
+              path="media"
+              element={<MediaLibrary />}
+            />
+
+            <Route
+              path="categories"
+              element={<Categories />}
+            />
+
+            <Route
+              path="comments"
+              element={<Comments />}
+            />
+
+            <Route
+              path="settings"
+              element={<Settings />}
+            />
+
           </Route>
         </Route>
+
       </Routes>
 
       <Footer />
